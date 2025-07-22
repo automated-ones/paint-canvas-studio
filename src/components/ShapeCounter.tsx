@@ -11,22 +11,27 @@ interface ShapeCounterProps {
 
 export const ShapeCounter = ({ counts }: ShapeCounterProps) => {
   const shapes = [
-    { type: "circle", icon: Circle, count: counts.circle, label: "دایره" },
-    { type: "rectangle", icon: Square, count: counts.rectangle, label: "مربع" },
-    { type: "triangle", icon: Triangle, count: counts.triangle, label: "مثلث" },
+    { type: "circle", icon: Circle, count: counts.circle, label: "Circles" },
+    { type: "rectangle", icon: Square, count: counts.rectangle, label: "Rectangles" },
+    { type: "triangle", icon: Triangle, count: counts.triangle, label: "Triangles" },
   ];
 
   return (
-    <Card className="w-full bg-card border-border">
-      <div className="p-4">
-        <div className="flex justify-center gap-8">
+    <Card className="w-full bg-gradient-to-r from-card to-card/80 border-primary/20 
+                     shadow-elegant backdrop-blur-sm">
+      <div className="p-6">
+        <div className="flex justify-center gap-12">
           {shapes.map((shape) => {
             const Icon = shape.icon;
             return (
-              <div key={shape.type} className="flex items-center gap-2">
-                <Icon className="h-6 w-6 text-muted-foreground" />
-                <span className="text-lg font-semibold text-foreground">
+              <div key={shape.type} className="flex flex-col items-center gap-2 
+                                               p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <Icon className="h-8 w-8 text-primary" />
+                <span className="text-2xl font-bold text-primary">
                   {shape.count}
+                </span>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  {shape.label}
                 </span>
               </div>
             );

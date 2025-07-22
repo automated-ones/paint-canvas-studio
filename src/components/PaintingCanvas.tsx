@@ -22,9 +22,9 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }
     if (!canvasRef.current) return;
 
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: 600,
-      height: 400,
-      backgroundColor: "#ffffff",
+      width: 700,
+      height: 450,
+      backgroundColor: "#f8fafc",
     });
 
     setFabricCanvas(canvas);
@@ -35,7 +35,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }
       if (e.target) {
         canvas.remove(e.target);
         updateShapeCounts(canvas);
-        toast.success("شکل حذف شد");
+        toast.success("Shape removed!");
       }
     });
 
@@ -80,7 +80,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }
       fabricCanvas.loadFromJSON(importData, () => {
         fabricCanvas.renderAll();
         updateShapeCounts(fabricCanvas);
-        toast.success("نقاشی بارگذاری شد");
+        toast.success("Painting loaded successfully!");
       });
     }
   }, [importData, fabricCanvas]);
@@ -88,7 +88,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }
   const addShape = (type: ShapeType, x?: number, y?: number) => {
     if (!fabricCanvas) return;
 
-    const colors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
+    const colors = ["hsl(263.4 70% 50.4%)", "hsl(12 76% 61%)", "hsl(269 91% 60%)", "hsl(24 90% 65%)", "hsl(280 65% 55%)"];
     const color = colors[Math.floor(Math.random() * colors.length)];
 
     let shape;
@@ -138,7 +138,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }
     if (shape) {
       fabricCanvas.add(shape);
       updateShapeCounts(fabricCanvas);
-      toast.success("شکل اضافه شد");
+      toast.success("Shape added!");
     }
   };
 
@@ -165,12 +165,18 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4">
-      <div className="border-2 border-dashed border-muted-foreground rounded-lg p-4 bg-card">
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="border-2 border-dashed border-primary/40 rounded-2xl p-6 
+                      bg-gradient-to-br from-card/50 to-card/30 backdrop-blur-sm 
+                      shadow-elegant hover:shadow-glow transition-all duration-300">
         <canvas 
           ref={canvasRef} 
-          className="border border-border rounded shadow-sm bg-white"
+          className="border-2 border-primary/20 rounded-xl shadow-lg bg-gradient-to-br 
+                     from-background to-muted/20 backdrop-blur-sm"
         />
+        <p className="text-center text-sm text-muted-foreground mt-4 font-medium">
+          Drag shapes here or double-click shapes to remove them
+        </p>
       </div>
     </div>
   );

@@ -30,35 +30,40 @@ export const PaintingHeader = ({ title, onTitleChange, onExport, onImport }: Pai
         const result = e.target?.result as string;
         const data = JSON.parse(result);
         onImport(data);
-        toast.success("نقاشی با موفقیت وارد شد");
+        toast.success("Painting imported successfully!");
       } catch (error) {
-        toast.error("خطا در خواندن فایل");
+        toast.error("Error reading file");
       }
     };
     reader.readAsText(file);
   };
 
   return (
-    <header className="border-b border-border bg-card p-4">
+    <header className="border-b border-primary/20 bg-gradient-to-r from-card to-card/80 
+                       backdrop-blur-sm shadow-elegant p-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {isEditing ? (
             <Input
               value={tempTitle}
               onChange={(e) => setTempTitle(e.target.value)}
               onBlur={handleTitleSave}
               onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
-              className="max-w-xs"
+              className="max-w-xs bg-card/50 border-primary/20 focus:border-primary 
+                         focus:ring-2 focus:ring-primary/20 transition-all duration-200"
               autoFocus
             />
           ) : (
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent 
+                             bg-clip-text text-transparent">
+                {title || "Digital Canvas"}
+              </h1>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsEditing(true)}
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 hover:bg-primary/10 text-primary/70 hover:text-primary"
               >
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -66,13 +71,24 @@ export const PaintingHeader = ({ title, onTitleChange, onExport, onImport }: Pai
           )}
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onExport} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={onExport} 
+            className="bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary 
+                       backdrop-blur-sm transition-all duration-200 hover:scale-105 
+                       shadow-lg hover:shadow-primary/25"
+          >
+            <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
+          <Button 
+            variant="outline" 
+            className="bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent-foreground 
+                       backdrop-blur-sm transition-all duration-200 hover:scale-105 
+                       shadow-lg hover:shadow-accent/25"
+          >
+            <Upload className="h-4 w-4 mr-2" />
             <label htmlFor="import-file" className="cursor-pointer">
               Import
             </label>
