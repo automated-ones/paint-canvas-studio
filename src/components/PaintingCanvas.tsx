@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Canvas as FabricCanvas, Circle, Rect, Polygon } from "fabric";
 import { ShapeType } from "./ShapesSidebar";
@@ -14,38 +13,19 @@ interface PaintingCanvasProps {
 export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, onAddShape }: PaintingCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
-  const [shapeCounts, setShapeCounts] = useState({
-    circle: 0,
-    rectangle: 0,
-    triangle: 0,
-  });
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    console.log("Initializing canvas...");
-    
     const canvas = new FabricCanvas(canvasRef.current, {
       width: 700,
       height: 450,
-      backgroundColor: "#1a1a2e",
+      backgroundColor: "#0f172a",
     });
-
-    // Add a test circle to make sure canvas is working
-    const testCircle = new Circle({
-      left: 300,
-      top: 200,
-      fill: "hsl(200, 80%, 60%)",
-      radius: 40,
-      stroke: "hsl(220, 100%, 70%)",
-      strokeWidth: 3,
-    });
-    
-    canvas.add(testCircle);
-    console.log("Test circle added to canvas");
 
     setFabricCanvas(canvas);
     onCanvasReady(canvas);
+    updateShapeCounts(canvas);
 
     // Handle double click to remove shapes
     canvas.on("mouse:dblclick", (e) => {
@@ -56,38 +36,38 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
       }
     });
 
-    // Update shape counts initially
-    updateShapeCounts(canvas);
-
     return () => {
       canvas.dispose();
     };
   }, []);
 
+  // Expose addShape function to parent
+  useEffect(() => {
+    if (fabricCanvas && onAddShape) {
+      onAddShape((type: ShapeType) => {
+        addShape(type);
+      });
+    }
+  }, [fabricCanvas, onAddShape]);
+
   // Handle drag and drop
   useEffect(() => {
     if (!canvasRef.current || !fabricCanvas) return;
 
-    console.log("Setting up drag and drop handlers...");
-
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
       e.dataTransfer!.dropEffect = "copy";
-      console.log("Drag over canvas");
     };
 
     const handleDrop = (e: DragEvent) => {
       e.preventDefault();
-      console.log("Drop event triggered");
       
       const shapeType = e.dataTransfer?.getData("shape-type") as ShapeType;
-      console.log("Shape type from drag:", shapeType);
       
       if (shapeType && fabricCanvas) {
         const rect = canvasRef.current!.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        console.log("Drop position:", x, y);
         
         addShape(shapeType, x, y);
       }
@@ -116,36 +96,21 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
     }
   }, [importData, fabricCanvas]);
 
-  // Expose addShape function to parent when canvas is ready
-  useEffect(() => {
-    if (fabricCanvas && onAddShape) {
-      onAddShape((type: ShapeType) => {
-        console.log("Adding shape via click:", type);
-        addShape(type);
-      });
-    }
-  }, [fabricCanvas, onAddShape]);
-
   const addShape = (type: ShapeType, x?: number, y?: number) => {
-    if (!fabricCanvas) {
-      console.log("Canvas not ready");
-      return;
-    }
-
-    console.log("Adding shape:", type, "at position:", x, y);
+    if (!fabricCanvas) return;
 
     const colors = [
-      "hsl(200, 80%, 60%)", 
-      "hsl(150, 70%, 55%)", 
-      "hsl(180, 75%, 50%)", 
-      "hsl(120, 65%, 60%)", 
-      "hsl(220, 85%, 65%)"
+      "hsl(200, 90%, 60%)", 
+      "hsl(160, 80%, 55%)", 
+      "hsl(180, 85%, 50%)", 
+      "hsl(140, 75%, 60%)", 
+      "hsl(220, 90%, 65%)"
     ];
     const color = colors[Math.floor(Math.random() * colors.length)];
 
     let shape;
-    const posX = x !== undefined ? x - 30 : Math.random() * 400 + 50;
-    const posY = y !== undefined ? y - 30 : Math.random() * 250 + 50;
+    const posX = x !== undefined ? x - 30 : Math.random() * (700 - 100) + 50;
+    const posY = y !== undefined ? y - 30 : Math.random() * (450 - 100) + 50;
 
     switch (type) {
       case "circle":
@@ -154,7 +119,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
           top: posY,
           fill: color,
           radius: 30,
-          stroke: "hsl(220, 100%, 70%)",
+          stroke: "hsl(200, 100%, 80%)",
           strokeWidth: 2,
         });
         break;
@@ -165,7 +130,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
           fill: color,
           width: 60,
           height: 60,
-          stroke: "hsl(220, 100%, 70%)",
+          stroke: "hsl(200, 100%, 80%)",
           strokeWidth: 2,
         });
         break;
@@ -180,7 +145,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
             left: posX,
             top: posY,
             fill: color,
-            stroke: "hsl(220, 100%, 70%)",
+            stroke: "hsl(200, 100%, 80%)",
             strokeWidth: 2,
           }
         );
@@ -188,7 +153,6 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
     }
 
     if (shape) {
-      console.log("Shape created, adding to canvas");
       fabricCanvas.add(shape);
       fabricCanvas.renderAll();
       updateShapeCounts(fabricCanvas);
@@ -214,10 +178,15 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
       }
     });
 
-    console.log("Shape counts updated:", counts);
     setShapeCounts(counts);
     onShapeCountChange(counts);
   };
+
+  const [shapeCounts, setShapeCounts] = useState({
+    circle: 0,
+    rectangle: 0,
+    triangle: 0,
+  });
 
   return (
     <div className="flex-1 flex items-center justify-center p-6">
