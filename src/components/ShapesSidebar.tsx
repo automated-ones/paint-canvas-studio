@@ -14,39 +14,41 @@ export const ShapesSidebar = ({ onShapeSelect }: ShapesSidebarProps) => {
     { type: "triangle" as const, icon: Triangle, label: "Triangle" },
   ];
 
+  const handleDragStart = (e: React.DragEvent, shapeType: ShapeType) => {
+    e.dataTransfer.setData("shape-type", shapeType);
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
   return (
-    <Card className="w-52 h-fit bg-gradient-to-b from-card to-card/80 border-primary/20 
+    <Card className="w-64 bg-gradient-to-b from-card to-card/80 border-primary/20 
                      shadow-elegant backdrop-blur-sm">
       <div className="p-6">
-        <h2 className="text-xl font-bold mb-6 bg-gradient-to-r from-primary to-accent 
-                       bg-clip-text text-transparent">Tools</h2>
+        <h2 className="text-xl font-bold text-primary mb-6 text-center">
+          Shapes
+        </h2>
         <div className="space-y-3">
           {shapes.map((shape) => {
             const Icon = shape.icon;
             return (
-              <button
+              <div
                 key={shape.type}
+                className="flex items-center gap-4 p-4 rounded-xl border-2 border-primary/20 
+                          bg-gradient-to-r from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20
+                          cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105
+                          hover:border-primary/40"
                 onClick={() => onShapeSelect(shape.type)}
-                className="w-full p-4 rounded-xl border-2 border-dashed border-primary/30 
-                           hover:border-primary hover:bg-primary/10 transition-all duration-200 
-                           group cursor-pointer hover:scale-105 hover:shadow-glow backdrop-blur-sm"
                 draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("shape-type", shape.type);
-                }}
+                onDragStart={(e) => handleDragStart(e, shape.type)}
               >
-                <div className="flex flex-col items-center gap-3">
-                  <Icon className="h-10 w-10 text-primary/70 group-hover:text-primary 
-                                   transition-colors duration-200" />
-                  <span className="text-sm font-medium text-foreground/80 group-hover:text-primary 
-                                   transition-colors duration-200">
-                    {shape.label}
-                  </span>
-                </div>
-              </button>
+                <Icon className="h-8 w-8 text-primary" />
+                <span className="font-semibold text-foreground">{shape.label}</span>
+              </div>
             );
           })}
         </div>
+        <p className="text-xs text-muted-foreground text-center mt-6 font-medium">
+          Click to add or drag to canvas
+        </p>
       </div>
     </Card>
   );

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, Polygon } from "fabric";
+import { useEffect, useRef } from "react";
+import { Canvas as FabricCanvas } from "fabric";
 import { ShapeType } from "./ShapesSidebar";
 import { toast } from "sonner";
 
@@ -7,12 +7,11 @@ interface PaintingCanvasProps {
   onShapeCountChange: (counts: { circle: number; rectangle: number; triangle: number }) => void;
   importData?: any;
   onCanvasReady: (canvas: FabricCanvas) => void;
-  onAddShape?: (addShapeFn: (type: ShapeType) => void) => void;
+  onAddShape: (type: ShapeType, x?: number, y?: number) => void;
 }
 
 export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, onAddShape }: PaintingCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -20,40 +19,24 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
     const canvas = new FabricCanvas(canvasRef.current, {
       width: 700,
       height: 450,
-      backgroundColor: "#0f172a",
+      backgroundColor: "#1e293b",
     });
 
-    setFabricCanvas(canvas);
     onCanvasReady(canvas);
-    updateShapeCounts(canvas);
 
     // Handle double click to remove shapes
     canvas.on("mouse:dblclick", (e) => {
       if (e.target) {
         canvas.remove(e.target);
+        canvas.renderAll();
         updateShapeCounts(canvas);
         toast.success("Shape removed!");
       }
     });
 
-    return () => {
-      canvas.dispose();
-    };
-  }, []);
-
-  // Expose addShape function to parent
-  useEffect(() => {
-    if (fabricCanvas && onAddShape) {
-      onAddShape((type: ShapeType) => {
-        addShape(type);
-      });
-    }
-  }, [fabricCanvas, onAddShape]);
-
-  // Handle drag and drop
-  useEffect(() => {
-    if (!canvasRef.current || !fabricCanvas) return;
-
+    // Set up drag and drop
+    const canvasElement = canvasRef.current;
+    
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
       e.dataTransfer!.dropEffect = "copy";
@@ -64,129 +47,49 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
       
       const shapeType = e.dataTransfer?.getData("shape-type") as ShapeType;
       
-      if (shapeType && fabricCanvas) {
-        const rect = canvasRef.current!.getBoundingClientRect();
+      if (shapeType) {
+        const rect = canvasElement.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
-        addShape(shapeType, x, y);
+        onAddShape(shapeType, x, y);
       }
     };
 
-    const canvasElement = canvasRef.current;
     canvasElement.addEventListener("dragover", handleDragOver);
     canvasElement.addEventListener("drop", handleDrop);
 
-    return () => {
-      if (canvasElement) {
-        canvasElement.removeEventListener("dragover", handleDragOver);
-        canvasElement.removeEventListener("drop", handleDrop);
-      }
+    const updateShapeCounts = (canvas: FabricCanvas) => {
+      const objects = canvas.getObjects();
+      const counts = { circle: 0, rectangle: 0, triangle: 0 };
+      
+      objects.forEach((obj) => {
+        if (obj.type === 'circle') counts.circle++;
+        else if (obj.type === 'rect') counts.rectangle++;
+        else if (obj.type === 'polygon') counts.triangle++;
+      });
+      
+      onShapeCountChange(counts);
     };
-  }, [fabricCanvas]);
+
+    return () => {
+      canvasElement.removeEventListener("dragover", handleDragOver);
+      canvasElement.removeEventListener("drop", handleDrop);
+      canvas.dispose();
+    };
+  }, []);
 
   // Handle import data
   useEffect(() => {
-    if (importData && fabricCanvas) {
-      fabricCanvas.loadFromJSON(importData, () => {
-        fabricCanvas.renderAll();
-        updateShapeCounts(fabricCanvas);
-        toast.success("Painting loaded successfully!");
+    if (importData && canvasRef.current) {
+      const canvas = new FabricCanvas(canvasRef.current);
+      canvas.loadFromJSON(importData, () => {
+        canvas.renderAll();
+        onCanvasReady(canvas);
+        toast.success("Painting imported successfully!");
       });
     }
-  }, [importData, fabricCanvas]);
-
-  const addShape = (type: ShapeType, x?: number, y?: number) => {
-    if (!fabricCanvas) return;
-
-    const colors = [
-      "hsl(200, 90%, 60%)", 
-      "hsl(160, 80%, 55%)", 
-      "hsl(180, 85%, 50%)", 
-      "hsl(140, 75%, 60%)", 
-      "hsl(220, 90%, 65%)"
-    ];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-
-    let shape;
-    const posX = x !== undefined ? x - 30 : Math.random() * (700 - 100) + 50;
-    const posY = y !== undefined ? y - 30 : Math.random() * (450 - 100) + 50;
-
-    switch (type) {
-      case "circle":
-        shape = new Circle({
-          left: posX,
-          top: posY,
-          fill: color,
-          radius: 30,
-          stroke: "hsl(200, 100%, 80%)",
-          strokeWidth: 2,
-        });
-        break;
-      case "rectangle":
-        shape = new Rect({
-          left: posX,
-          top: posY,
-          fill: color,
-          width: 60,
-          height: 60,
-          stroke: "hsl(200, 100%, 80%)",
-          strokeWidth: 2,
-        });
-        break;
-      case "triangle":
-        shape = new Polygon(
-          [
-            { x: 0, y: -30 },
-            { x: 30, y: 30 },
-            { x: -30, y: 30 },
-          ],
-          {
-            left: posX,
-            top: posY,
-            fill: color,
-            stroke: "hsl(200, 100%, 80%)",
-            strokeWidth: 2,
-          }
-        );
-        break;
-    }
-
-    if (shape) {
-      fabricCanvas.add(shape);
-      fabricCanvas.renderAll();
-      updateShapeCounts(fabricCanvas);
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} added!`);
-    }
-  };
-
-  const updateShapeCounts = (canvas: FabricCanvas) => {
-    const objects = canvas.getObjects();
-    const counts = {
-      circle: 0,
-      rectangle: 0,
-      triangle: 0,
-    };
-
-    objects.forEach((obj) => {
-      if (obj instanceof Circle) {
-        counts.circle++;
-      } else if (obj instanceof Rect) {
-        counts.rectangle++;
-      } else if (obj instanceof Polygon) {
-        counts.triangle++;
-      }
-    });
-
-    setShapeCounts(counts);
-    onShapeCountChange(counts);
-  };
-
-  const [shapeCounts, setShapeCounts] = useState({
-    circle: 0,
-    rectangle: 0,
-    triangle: 0,
-  });
+  }, [importData]);
 
   return (
     <div className="flex-1 flex items-center justify-center p-6">
@@ -195,11 +98,11 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
                       shadow-elegant hover:shadow-glow transition-all duration-300">
         <canvas 
           ref={canvasRef} 
-          className="border-2 border-primary/20 rounded-xl shadow-lg bg-gradient-to-br 
-                     from-background to-muted/20 backdrop-blur-sm"
+          className="border-2 border-primary/20 rounded-xl shadow-lg"
+          style={{ backgroundColor: "#1e293b" }}
         />
         <p className="text-center text-sm text-muted-foreground mt-4 font-medium">
-          Drag shapes here or double-click shapes to remove them
+          Click shapes on the left or drag them here • Double-click shapes to remove
         </p>
       </div>
     </div>
