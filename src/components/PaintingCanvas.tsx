@@ -7,9 +7,10 @@ interface PaintingCanvasProps {
   onShapeCountChange: (counts: { circle: number; rectangle: number; triangle: number }) => void;
   importData?: any;
   onCanvasReady: (canvas: FabricCanvas) => void;
+  onAddShape?: (addShapeFn: (type: ShapeType) => void) => void;
 }
 
-export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }: PaintingCanvasProps) => {
+export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, onAddShape }: PaintingCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [shapeCounts, setShapeCounts] = useState({
@@ -24,7 +25,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }
     const canvas = new FabricCanvas(canvasRef.current, {
       width: 700,
       height: 450,
-      backgroundColor: "#f8fafc",
+      backgroundColor: "#ffffff",
     });
 
     setFabricCanvas(canvas);
@@ -85,10 +86,72 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady }
     }
   }, [importData, fabricCanvas]);
 
+  // Expose addShape function to parent when canvas is ready
+  useEffect(() => {
+    if (fabricCanvas && onAddShape) {
+      onAddShape((type: ShapeType) => {
+        if (!fabricCanvas) return;
+
+        const colors = ["hsl(200 100% 50%)", "hsl(120 60% 50%)", "hsl(190 80% 60%)", "hsl(140 70% 55%)", "hsl(210 90% 55%)"];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        let shape;
+        const posX = Math.random() * 400 + 50;
+        const posY = Math.random() * 250 + 50;
+
+        switch (type) {
+          case "circle":
+            shape = new Circle({
+              left: posX,
+              top: posY,
+              fill: color,
+              radius: 30,
+              stroke: "#000",
+              strokeWidth: 2,
+            });
+            break;
+          case "rectangle":
+            shape = new Rect({
+              left: posX,
+              top: posY,
+              fill: color,
+              width: 60,
+              height: 60,
+              stroke: "#000",
+              strokeWidth: 2,
+            });
+            break;
+          case "triangle":
+            shape = new Polygon(
+              [
+                { x: 0, y: -30 },
+                { x: 30, y: 30 },
+                { x: -30, y: 30 },
+              ],
+              {
+                left: posX,
+                top: posY,
+                fill: color,
+                stroke: "#000",
+                strokeWidth: 2,
+              }
+            );
+            break;
+        }
+
+        if (shape) {
+          fabricCanvas.add(shape);
+          updateShapeCounts(fabricCanvas);
+          toast.success("Shape added!");
+        }
+      });
+    }
+  }, [fabricCanvas, onAddShape]);
+
   const addShape = (type: ShapeType, x?: number, y?: number) => {
     if (!fabricCanvas) return;
 
-    const colors = ["hsl(263.4 70% 50.4%)", "hsl(12 76% 61%)", "hsl(269 91% 60%)", "hsl(24 90% 65%)", "hsl(280 65% 55%)"];
+    const colors = ["hsl(200 100% 50%)", "hsl(120 60% 50%)", "hsl(190 80% 60%)", "hsl(140 70% 55%)", "hsl(210 90% 55%)"];
     const color = colors[Math.floor(Math.random() * colors.length)];
 
     let shape;

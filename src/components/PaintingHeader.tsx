@@ -84,7 +84,7 @@ export const PaintingHeader = ({ title, onTitleChange, onExport, onImport }: Pai
           </Button>
           <Button 
             variant="outline" 
-            className="bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent-foreground 
+            className="bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent 
                        backdrop-blur-sm transition-all duration-200 hover:scale-105 
                        shadow-lg hover:shadow-accent/25"
           >

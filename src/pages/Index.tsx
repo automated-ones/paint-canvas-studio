@@ -15,15 +15,19 @@ const Index = () => {
   });
   const [canvas, setCanvas] = useState<FabricCanvas | null>(null);
   const [importData, setImportData] = useState<any>(null);
+  const [addShapeFunction, setAddShapeFunction] = useState<((type: ShapeType) => void) | null>(null);
 
   const handleShapeSelect = (shape: ShapeType) => {
-    // This will be handled by drag and drop or canvas click
-    toast.info(`${shape} انتخاب شد - آن را به بوم بکشید`);
+    if (addShapeFunction) {
+      addShapeFunction(shape);
+    } else {
+      toast.info(`${shape} selected - drag it to canvas or click will add it`);
+    }
   };
 
   const handleExport = () => {
     if (!canvas) {
-      toast.error("بوم آماده نیست");
+      toast.error("Canvas is not ready");
       return;
     }
 
@@ -46,7 +50,7 @@ const Index = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast.success("نقاشی صادر شد");
+    toast.success("Painting exported successfully");
   };
 
   const handleImport = (data: any) => {
@@ -76,6 +80,7 @@ const Index = () => {
           onShapeCountChange={setShapeCounts}
           importData={importData}
           onCanvasReady={setCanvas}
+          onAddShape={setAddShapeFunction}
         />
       </div>
       
