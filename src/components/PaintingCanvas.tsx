@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Canvas as FabricCanvas, Circle, Rect, Polygon } from "fabric";
 import { ShapeType } from "./ShapesSidebar";
@@ -22,11 +23,26 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
   useEffect(() => {
     if (!canvasRef.current) return;
 
+    console.log("Initializing canvas...");
+    
     const canvas = new FabricCanvas(canvasRef.current, {
       width: 700,
       height: 450,
-      backgroundColor: "#ffffff",
+      backgroundColor: "#1a1a2e",
     });
+
+    // Add a test circle to make sure canvas is working
+    const testCircle = new Circle({
+      left: 300,
+      top: 200,
+      fill: "hsl(200, 80%, 60%)",
+      radius: 40,
+      stroke: "hsl(220, 100%, 70%)",
+      strokeWidth: 3,
+    });
+    
+    canvas.add(testCircle);
+    console.log("Test circle added to canvas");
 
     setFabricCanvas(canvas);
     onCanvasReady(canvas);
@@ -40,6 +56,9 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
       }
     });
 
+    // Update shape counts initially
+    updateShapeCounts(canvas);
+
     return () => {
       canvas.dispose();
     };
@@ -47,30 +66,41 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
 
   // Handle drag and drop
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !fabricCanvas) return;
+
+    console.log("Setting up drag and drop handlers...");
 
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
+      e.dataTransfer!.dropEffect = "copy";
+      console.log("Drag over canvas");
     };
 
     const handleDrop = (e: DragEvent) => {
       e.preventDefault();
+      console.log("Drop event triggered");
+      
       const shapeType = e.dataTransfer?.getData("shape-type") as ShapeType;
+      console.log("Shape type from drag:", shapeType);
+      
       if (shapeType && fabricCanvas) {
         const rect = canvasRef.current!.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+        console.log("Drop position:", x, y);
+        
         addShape(shapeType, x, y);
       }
     };
 
-    canvasRef.current.addEventListener("dragover", handleDragOver);
-    canvasRef.current.addEventListener("drop", handleDrop);
+    const canvasElement = canvasRef.current;
+    canvasElement.addEventListener("dragover", handleDragOver);
+    canvasElement.addEventListener("drop", handleDrop);
 
     return () => {
-      if (canvasRef.current) {
-        canvasRef.current.removeEventListener("dragover", handleDragOver);
-        canvasRef.current.removeEventListener("drop", handleDrop);
+      if (canvasElement) {
+        canvasElement.removeEventListener("dragover", handleDragOver);
+        canvasElement.removeEventListener("drop", handleDrop);
       }
     };
   }, [fabricCanvas]);
@@ -90,73 +120,32 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
   useEffect(() => {
     if (fabricCanvas && onAddShape) {
       onAddShape((type: ShapeType) => {
-        if (!fabricCanvas) return;
-
-        const colors = ["hsl(200 100% 50%)", "hsl(120 60% 50%)", "hsl(190 80% 60%)", "hsl(140 70% 55%)", "hsl(210 90% 55%)"];
-        const color = colors[Math.floor(Math.random() * colors.length)];
-
-        let shape;
-        const posX = Math.random() * 400 + 50;
-        const posY = Math.random() * 250 + 50;
-
-        switch (type) {
-          case "circle":
-            shape = new Circle({
-              left: posX,
-              top: posY,
-              fill: color,
-              radius: 30,
-              stroke: "#000",
-              strokeWidth: 2,
-            });
-            break;
-          case "rectangle":
-            shape = new Rect({
-              left: posX,
-              top: posY,
-              fill: color,
-              width: 60,
-              height: 60,
-              stroke: "#000",
-              strokeWidth: 2,
-            });
-            break;
-          case "triangle":
-            shape = new Polygon(
-              [
-                { x: 0, y: -30 },
-                { x: 30, y: 30 },
-                { x: -30, y: 30 },
-              ],
-              {
-                left: posX,
-                top: posY,
-                fill: color,
-                stroke: "#000",
-                strokeWidth: 2,
-              }
-            );
-            break;
-        }
-
-        if (shape) {
-          fabricCanvas.add(shape);
-          updateShapeCounts(fabricCanvas);
-          toast.success("Shape added!");
-        }
+        console.log("Adding shape via click:", type);
+        addShape(type);
       });
     }
   }, [fabricCanvas, onAddShape]);
 
   const addShape = (type: ShapeType, x?: number, y?: number) => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas) {
+      console.log("Canvas not ready");
+      return;
+    }
 
-    const colors = ["hsl(200 100% 50%)", "hsl(120 60% 50%)", "hsl(190 80% 60%)", "hsl(140 70% 55%)", "hsl(210 90% 55%)"];
+    console.log("Adding shape:", type, "at position:", x, y);
+
+    const colors = [
+      "hsl(200, 80%, 60%)", 
+      "hsl(150, 70%, 55%)", 
+      "hsl(180, 75%, 50%)", 
+      "hsl(120, 65%, 60%)", 
+      "hsl(220, 85%, 65%)"
+    ];
     const color = colors[Math.floor(Math.random() * colors.length)];
 
     let shape;
-    const posX = x || Math.random() * 400 + 50;
-    const posY = y || Math.random() * 250 + 50;
+    const posX = x !== undefined ? x - 30 : Math.random() * 400 + 50;
+    const posY = y !== undefined ? y - 30 : Math.random() * 250 + 50;
 
     switch (type) {
       case "circle":
@@ -165,7 +154,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
           top: posY,
           fill: color,
           radius: 30,
-          stroke: "#000",
+          stroke: "hsl(220, 100%, 70%)",
           strokeWidth: 2,
         });
         break;
@@ -176,7 +165,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
           fill: color,
           width: 60,
           height: 60,
-          stroke: "#000",
+          stroke: "hsl(220, 100%, 70%)",
           strokeWidth: 2,
         });
         break;
@@ -191,7 +180,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
             left: posX,
             top: posY,
             fill: color,
-            stroke: "#000",
+            stroke: "hsl(220, 100%, 70%)",
             strokeWidth: 2,
           }
         );
@@ -199,9 +188,11 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
     }
 
     if (shape) {
+      console.log("Shape created, adding to canvas");
       fabricCanvas.add(shape);
+      fabricCanvas.renderAll();
       updateShapeCounts(fabricCanvas);
-      toast.success("Shape added!");
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} added!`);
     }
   };
 
@@ -223,6 +214,7 @@ export const PaintingCanvas = ({ onShapeCountChange, importData, onCanvasReady, 
       }
     });
 
+    console.log("Shape counts updated:", counts);
     setShapeCounts(counts);
     onShapeCountChange(counts);
   };
